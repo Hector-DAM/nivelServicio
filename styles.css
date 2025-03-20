@@ -1,0 +1,38 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.upload-box {
+    border: 2px dashed #007bff;
+    padding: 20px;
+    text-align: center;
+    background-color: white;
+    margin: 10px auto;
+    width: 50%;
+    border-radius: 10px;
+}
+
+div {
+    margin-bottom: 10px;
+}
