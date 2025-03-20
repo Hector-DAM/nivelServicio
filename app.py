@@ -1,61 +1,35 @@
-import dash
-from dash import dcc, html
-import dash.dependencies as dd
+# app.py
+import streamlit as st
 import pandas as pd
-import plotly.express as px
-from nivelServicio import cargar_datos
+import os
+from nivelServicio import procesar_nivel_servicio
 
-# Inicializar aplicación Dash
-app = dash.Dash(__name__)
+# Configurar la interfaz
+st.title("Análisis de Nivel de Servicio en Retail")
 
-# Layout de la aplicación
-app.layout = html.Div([
-    html.H1("Reporte de Nivel de Servicio", style={'textAlign': 'center'}),
-    
-    dcc.Upload(
-        id='upload-ventas',
-        children=html.Button('Cargar Archivo de Ventas')
-    ),
-    dcc.Upload(
-        id='upload-inventario',
-        children=html.Button('Cargar Archivo de Inventario')
-    ),
-    
-    html.Div(id='output-data-upload'),
-    
-    dcc.Graph(id="graf_tallas", style={'height': '70vh'})
-])
+# Cargar archivos de ventas e inventario
+ventas_file = st.file_uploader("Subir archivo de ventas (Excel)", type=["xlsx"])
+inventario_file = st.file_uploader("Subir archivo de inventario (Excel)", type=["xlsx"])
 
-@app.callback(
-    dd.Output("graf_tallas", "figure"),
-    [dd.Input("upload-ventas", "contents"),
-     dd.Input("upload-inventario", "contents")]
-)
-def actualizar_graf_tallas(ventas_path, inventario_path):
-    if not ventas_path or not inventario_path:
-        return px.scatter(title="Cargue archivos para visualizar los datos")
-    
-    df = cargar_datos(ventas_path, inventario_path)
-    
-    # Validación de datos
-    if df.empty:
-        return px.scatter(title="No hay datos disponibles")
-    
-    # Crear tabla pivote
-    pivot = df.pivot_table(index=["Estilo-Color"], columns="Size", values="NivelServicio", aggfunc="mean").reset_index()
-    
-    # Generar heatmap
-    fig = px.imshow(
-        pivot.set_index("Estilo-Color"),
-        color_continuous_scale="Viridis",
-        labels={"x": "Talla", "y": "Estilo-Color", "color": "Nivel de Servicio"},
-        title="Nivel de Servicio"
-    )
-    fig.update_layout(xaxis_nticks=len(pivot.columns), yaxis_nticks=len(pivot.index))
-    
-    return fig
+# Ruta relativa del catálogo en GitHub
+catalogo_path = "./tablaSKU.xlsx"
+tiendas_path = "./TiendasM3.xlsx"
 
-if __name__ == "__main__":
+# Verificar si se cargaron los archivos
+if ventas_file and inventario_file:
+    ventas_df = pd.read_excel(ventas_file)
+    inventario_df = pd.read_excel(inventario_file)
     
-    # Iniciar la aplicación en 0.0.0.0
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    # Cargar catálogos desde rutas relativas
+    if os.path.exists(catalogo_path) and os.path.exists(tiendas_path):
+        catalogo_df = pd.read_excel(catalogo_path)
+        tiendas_df = pd.read_excel(tiendas_path)
+        
+        # Procesar los datos
+        resultado = procesar_nivel_servicio(ventas_df, inventario_df, catalogo_df, tiendas_df)
+        
+        # Mostrar resultados
+        st.write("### Reporte de Nivel de Servicio")
+        st.dataframe(resultado)
+    else:
+        st.error("No se encontraron los archivos de catálogo o tiendas en la ruta especificada.")
