@@ -30,7 +30,7 @@ def upload_file():
         
         resultado = procesar_nivel_servicio(ventas_df, inventario_df, catalogo_df, tiendas_df)
         
-        return resultado.to_html()
+        return render_template('resultado.html', ventas=ventas_df.to_html(), inventario=inventario_df.to_html(), nivel_servicio=resultado.to_html())
     else:
         return "Error: No se encontraron los archivos de catálogo o tiendas en la ruta especificada.", 500
 
