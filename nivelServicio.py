@@ -25,7 +25,7 @@ def procesar_nivel_servicio(ventas_df, inventario_df, catalogo_df, tiendas_df):
     try:
         inventario_df = inventario_df.merge(catalogo_df, on="SKU", how="left")
     except KeyError:
-        inventario_df["STYLE"] = "N/A"
+        inventario_df["STYLE_y"] = "N/A"
         inventario_df["Color Name"] = "N/A"
         inventario_df["Size"] = "N/A"
     
@@ -33,12 +33,12 @@ def procesar_nivel_servicio(ventas_df, inventario_df, catalogo_df, tiendas_df):
     ventas_df["STYLE"].fillna("Desconocido", inplace=True)
     ventas_df["Color Name"].fillna("Desconocido", inplace=True)
     
-    inventario_df["STYLE"].fillna("Desconocido", inplace=True)
+    inventario_df["STYLE_y"].fillna("Desconocido", inplace=True)
     inventario_df["Color Name"].fillna("Desconocido", inplace=True)
     
     # Crear columna Estilo-Color
     ventas_df["Estilo-Color"] = ventas_df["STYLE"] + " - " + ventas_df["Color Name"]
-    inventario_df["Estilo-Color"] = inventario_df["STYLE"] + " - " + inventario_df["Color Name"]
+    inventario_df["Estilo-Color"] = inventario_df["STYLE_y"] + " - " + inventario_df["Color Name"]
     
     # Agrupar ventas por Estilo-Color y talla
     ventas_agrupadas = ventas_df.groupby(["Estilo-Color", "Size", "MES"]).agg({"M3 QTY": "sum"}).reset_index()
