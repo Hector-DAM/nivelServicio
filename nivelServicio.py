@@ -2,10 +2,6 @@ import pandas as pd
 import numpy as np
 import os
 
-# Definir rutas relativas para catálogos
-RUTA_CATALOGO = os.path.join("data", "tablaSKU.xlsx")
-RUTA_TIENDAS = os.path.join("data", "listado_tiendas.xlsx")
-
 def cargar_datos(ventas_path, inventario_path):
     # Cargar datos de ventas e inventario
     ventas = pd.read_excel(ventas_path)
