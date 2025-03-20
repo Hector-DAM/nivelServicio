@@ -1,47 +1,36 @@
+# nivelServicio.py
 import pandas as pd
-import numpy as np
-import os
 
-def cargar_datos(ventas_path, inventario_path):
-    # Cargar datos de ventas e inventario
-    ventas = pd.read_excel(ventas_path)
-    inventario = pd.read_excel(inventario_path)
-    catalogo = pd.read_excel(RUTA_CATALOGO)
-    tiendas = pd.read_excel(RUTA_TIENDAS)
+def procesar_nivel_servicio(ventas_df, inventario_df, catalogo_df, tiendas_df):
+    """
+    Procesa los datos de ventas e inventario para generar un reporte de nivel de servicio.
+    :param ventas_df: DataFrame con los datos de ventas.
+    :param inventario_df: DataFrame con los datos de inventario.
+    :param catalogo_df: DataFrame con el catálogo de SKUs.
+    :param tiendas_df: DataFrame con la información de tiendas.
+    :return: DataFrame con el reporte de nivel de servicio.
+    """
+    # Convertir fechas en ventas
+    ventas_df["ORD DATE"] = pd.to_datetime(ventas_df["ORD DATE"].astype(str), format="%Y%m%d")
+    ventas_df["MES"] = ventas_df["ORD DATE"].dt.to_period("M")
     
-    # Convertir fecha y extraer mes
-    ventas["ORD DATE"] = pd.to_datetime(ventas["ORD DATE"], format="%Y%m%d", errors="coerce")
-    ventas["Mes"] = ventas["ORD DATE"].dt.to_period("M").astype(str)
+    # Unir ventas con el catálogo para obtener estilo, color y talla
+    ventas_df = ventas_df.merge(catalogo_df, on="SKU", how="left")
     
-    # Cruce con catálogo y tiendas
-    ventas = ventas.merge(catalogo, on="SKU", how="left")
-    inventario = inventario.merge(catalogo, on="SKU", how="left")
-    ventas = ventas.merge(tiendas[["STORE", "Tienda"]], on="STORE", how="left")
+    # Unir inventario con el catálogo para agregar tallas
+    inventario_df = inventario_df.merge(catalogo_df, on="SKU", how="left")
     
-    # Cruce con inventario
-    datos_finales = ventas.merge(
-        inventario[["STORE", "SKU", "AVAILABLE"],].drop_duplicates(),
-        on=["STORE", "SKU"],
-        how="left"
-    )
+    # Agrupar ventas por estilo-color y talla
+    ventas_agrupadas = ventas_df.groupby(["STYLE", "Color Name", "Size", "MES"]).agg({"M3 QTY": "sum"}).reset_index()
     
-    # Crear columna combinada Estilo-Color
-    datos_finales["Estilo-Color"] = datos_finales["STYLE"].astype(str) + " - " + datos_finales["Color Name"].astype(str)
+    # Agrupar inventario por estilo-color y talla
+    inventario_agrupado = inventario_df.groupby(["STYLE", "Color Name", "Size"]).agg({"AVAILABLE": "sum"}).reset_index()
     
-    # Manejo de divisiones por cero
-    datos_finales["AVAILABLE"] = datos_finales["AVAILABLE"].replace(0, np.nan)
+    # Unir ventas e inventario
+    reporte = ventas_agrupadas.merge(inventario_agrupado, on=["STYLE", "Color Name", "Size"], how="left")
+    reporte["AVAILABLE"].fillna(0, inplace=True)
     
-    # Cálculo seguro de indicadores
-    datos_finales["SellThrough"] = np.where(
-        datos_finales["AVAILABLE"].notna(),
-        datos_finales["M3 QTY"] / datos_finales["AVAILABLE"],
-        np.nan
-    )
-
-    datos_finales["NivelServicio"] = np.where(
-        (datos_finales["M3 QTY"] + datos_finales["AVAILABLE"]) != 0,
-        datos_finales["M3 QTY"] / (datos_finales["M3 QTY"] + datos_finales["AVAILABLE"]),
-        np.nan
-    )
+    # Calcular Sell-Through
+    reporte["Sell-Through"] = reporte["M3 QTY"] / (reporte["M3 QTY"] + reporte["AVAILABLE"])
     
-    return datos_finales
+    return reporte
