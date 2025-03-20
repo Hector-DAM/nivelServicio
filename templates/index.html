@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Archivos</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Subir Archivos para Análisis</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="ventas">Archivo de Ventas (Excel):</label>
+            <input type="file" name="ventas" id="ventas" required>
+            
+            <label for="inventario">Archivo de Inventario (Excel):</label>
+            <input type="file" name="inventario" id="inventario" required>
+            
+            <button type="submit">Subir y Procesar</button>
+        </form>
+    </div>
+</body>
+</html>
