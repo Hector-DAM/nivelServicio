@@ -1,4 +1,4 @@
+flask
 pandas
-streamlit
-plotly
 openpyxl
+plotly
