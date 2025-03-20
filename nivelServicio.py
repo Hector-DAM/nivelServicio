@@ -29,6 +29,13 @@ def procesar_nivel_servicio(ventas_df, inventario_df, catalogo_df, tiendas_df):
         inventario_df["Color Name"] = "N/A"
         inventario_df["Size"] = "N/A"
     
+    # Reemplazar NaN en STYLE y Color Name antes de concatenar
+    ventas_df["STYLE"].fillna("Desconocido", inplace=True)
+    ventas_df["Color Name"].fillna("Desconocido", inplace=True)
+    
+    inventario_df["STYLE"].fillna("Desconocido", inplace=True)
+    inventario_df["Color Name"].fillna("Desconocido", inplace=True)
+    
     # Crear columna Estilo-Color
     ventas_df["Estilo-Color"] = ventas_df["STYLE"] + " - " + ventas_df["Color Name"]
     inventario_df["Estilo-Color"] = inventario_df["STYLE"] + " - " + inventario_df["Color Name"]
