@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Resultados del Análisis</h1>
+        
+        <h2>Ventas</h2>
+        <div class="table-container">
+            {{ ventas|safe }}
+        </div>
+        
+        <h2>Inventario</h2>
+        <div class="table-container">
+            {{ inventario|safe }}
+        </div>
+        
+        <h2>Nivel de Servicio</h2>
+        <div class="table-container">
+            {{ nivel_servicio|safe }}
+        </div>
+        
+        <a href="/" class="btn">Subir Nuevos Archivos</a>
+    </div>
+</body>
+</html>
