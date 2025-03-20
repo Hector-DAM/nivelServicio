@@ -1,56 +1,48 @@
 import pandas as pd
+import numpy as np
 
-def procesar_nivel_servicio(ventas_df, inventario_df, catalogo_df, tiendas_df):
+def procesar_datos(ventas_df, inventario_df, catalogo_df, tiendas_df):
     """
-    Procesa los datos de ventas e inventario para generar un reporte de nivel de servicio.
+    Procesa los datos de ventas e inventario para generar reportes de ventas, inventario y nivel de servicio.
     :param ventas_df: DataFrame con los datos de ventas.
     :param inventario_df: DataFrame con los datos de inventario.
     :param catalogo_df: DataFrame con el catálogo de SKUs.
     :param tiendas_df: DataFrame con la información de tiendas.
-    :return: DataFrame con el reporte de nivel de servicio.
+    :return: DataFrame con el reporte final.
     """
     # Convertir fechas en ventas
-    ventas_df["ORD DATE"] = pd.to_datetime(ventas_df["ORD DATE"].astype(str), format="%Y%m%d")
-    ventas_df["MES"] = ventas_df["ORD DATE"].dt.to_period("M")
+    ventas_df["ORD DATE"] = pd.to_datetime(ventas_df["ORD DATE"].astype(str), format="%Y%m%d", errors="coerce")
+    ventas_df["Mes"] = ventas_df["ORD DATE"].dt.to_period("M").astype(str)
     
-    # Intentar unir ventas con el catálogo para obtener estilo, color y talla
-    try:
-        ventas_df = ventas_df.merge(catalogo_df, on="SKU", how="left")
-    except KeyError:
-        ventas_df["STYLE"] = "N/A"
-        ventas_df["Color Name"] = "N/A"
-        ventas_df["Size"] = "N/A"
+    # Unir ventas con el catálogo para obtener estilo, color y talla
+    ventas_df = ventas_df.merge(catalogo_df, on="SKU", how="left")
+    inventario_df = inventario_df.merge(catalogo_df, on="SKU", how="left")
     
-    # Intentar unir inventario con el catálogo para agregar tallas
-    try:
-        inventario_df = inventario_df.merge(catalogo_df, on="SKU", how="left")
-    except KeyError:
-        inventario_df["STYLE_y"] = "N/A"
-        inventario_df["Color Name"] = "N/A"
-        inventario_df["Size"] = "N/A"
-    
-    # Reemplazar NaN en STYLE y Color Name antes de concatenar
-    ventas_df["STYLE"].fillna("Desconocido", inplace=True)
-    ventas_df["Color Name"].fillna("Desconocido", inplace=True)
-    
-    inventario_df["STYLE_y"].fillna("Desconocido", inplace=True)
-    inventario_df["Color Name"].fillna("Desconocido", inplace=True)
+    # Unir con tiendas para obtener el nombre de la tienda
+    ventas_df = ventas_df.merge(tiendas_df, on="STORE", how="left")
+    inventario_df = inventario_df.merge(tiendas_df, on="STORE", how="left")
     
     # Crear columna Estilo-Color
-    ventas_df["Estilo-Color"] = ventas_df["STYLE"] + " - " + ventas_df["Color Name"]
-    inventario_df["Estilo-Color"] = inventario_df["STYLE_y"] + " - " + inventario_df["Color Name"]
+    ventas_df["Estilo-Color"] = ventas_df["STYLE"].fillna("Desconocido") + " - " + ventas_df["Color Name"].fillna("Desconocido")
+    inventario_df["Estilo-Color"] = inventario_df["STYLE"].fillna("Desconocido") + " - " + inventario_df["Color Name"].fillna("Desconocido")
     
-    # Agrupar ventas por Estilo-Color y talla
-    ventas_agrupadas = ventas_df.groupby(["Estilo-Color", "Size", "MES"]).agg({"M3 QTY": "sum"}).reset_index()
+    # Manejo de valores nulos en inventario
+    inventario_df["AVAILABLE"].fillna(0, inplace=True)
     
-    # Agrupar inventario por Estilo-Color y talla
+    # Calcular métricas
+    ventas_agrupadas = ventas_df.groupby(["Estilo-Color", "Size", "Mes"]).agg({"M3 QTY": "sum"}).reset_index()
     inventario_agrupado = inventario_df.groupby(["Estilo-Color", "Size"]).agg({"AVAILABLE": "sum"}).reset_index()
     
     # Unir ventas e inventario
     reporte = ventas_agrupadas.merge(inventario_agrupado, on=["Estilo-Color", "Size"], how="left")
     reporte["AVAILABLE"].fillna(0, inplace=True)
     
-    # Calcular Sell-Through
-    reporte["Sell-Through"] = reporte["M3 QTY"] / (reporte["M3 QTY"] + reporte["AVAILABLE"])
+    # Calcular Sell-Through y Nivel de Servicio
+    reporte["SellThrough"] = np.where(reporte["AVAILABLE"] > 0, reporte["M3 QTY"] / reporte["AVAILABLE"], np.nan)
+    reporte["NivelServicio"] = np.where(
+        (reporte["M3 QTY"] + reporte["AVAILABLE"]) != 0,
+        reporte["M3 QTY"] / (reporte["M3 QTY"] + reporte["AVAILABLE"]),
+        np.nan
+    )
     
     return reporte
