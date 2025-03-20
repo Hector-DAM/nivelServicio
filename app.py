@@ -33,8 +33,3 @@ if ventas_file and inventario_file:
         st.dataframe(resultado)
     else:
         st.error("No se encontraron los archivos de catálogo o tiendas en la ruta especificada.")
-
-
-PORT = int(os.environ.get("PORT", 8501))  # Usa el puerto asignado por Render o el 8501 por defecto
-
-st.run(port=PORT)
