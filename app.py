@@ -56,4 +56,6 @@ def actualizar_graf_tallas(ventas_path, inventario_path):
     return fig
 
 if __name__ == "__main__":
-    app.run_server(debug=True, port=8050)
+    
+    # Iniciar la aplicación en 0.0.0.0
+    app.run(host="0.0.0.0", port=5000, debug=False)
