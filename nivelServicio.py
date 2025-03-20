@@ -13,11 +13,21 @@ def procesar_nivel_servicio(ventas_df, inventario_df, catalogo_df, tiendas_df):
     ventas_df["ORD DATE"] = pd.to_datetime(ventas_df["ORD DATE"].astype(str), format="%Y%m%d")
     ventas_df["MES"] = ventas_df["ORD DATE"].dt.to_period("M")
     
-    # Unir ventas con el catálogo para obtener estilo, color y talla
-    ventas_df = ventas_df.merge(catalogo_df, on="SKU", how="left")
+    # Intentar unir ventas con el catálogo para obtener estilo, color y talla
+    try:
+        ventas_df = ventas_df.merge(catalogo_df, on="SKU", how="left")
+    except KeyError:
+        ventas_df["STYLE"] = "N/A"
+        ventas_df["Color Name"] = "N/A"
+        ventas_df["Size"] = "N/A"
     
-    # Unir inventario con el catálogo para agregar tallas
-    inventario_df = inventario_df.merge(catalogo_df, on="SKU", how="left")
+    # Intentar unir inventario con el catálogo para agregar tallas
+    try:
+        inventario_df = inventario_df.merge(catalogo_df, on="SKU", how="left")
+    except KeyError:
+        inventario_df["STYLE"] = "N/A"
+        inventario_df["Color Name"] = "N/A"
+        inventario_df["Size"] = "N/A"
     
     # Crear columna Estilo-Color
     ventas_df["Estilo-Color"] = ventas_df["STYLE"] + " - " + ventas_df["Color Name"]
